@@ -1,0 +1,24 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="holiday_list" format="json">
+      <types:shape format="weave" example="examples/sample-holiday-list.json"><![CDATA[%dw 2.0
+type holiday_list = Array<{|
+  Code: String, 
+  Description: String
+|}> {"MetadataFormat": "json",
+"example": "[{\"Code\":\"NEW-YEARS-DAY-ACTUAL\",\"Description\":\"New Year's Day\"}]"}
+
+]]></types:shape>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#f112cef5-2d8e-402d-8b9d-d1c72fea729d">
+    <types:processor-declaration>
+      <types:output-event>
+        <types:message>
+          <types:payload type="holiday_list"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+</types:mule>

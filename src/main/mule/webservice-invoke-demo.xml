@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:wsc="http://www.mulesoft.org/schema/mule/wsc"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/wsc http://www.mulesoft.org/schema/mule/wsc/current/mule-wsc.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="06d50e0d-23dc-4d0c-ab9f-2a398d12c042" />
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="13015d01-0aad-4856-92fd-b0b57dd90f7e" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<wsc:config name="Web_Service_Consumer_Config" doc:name="Web Service Consumer Config" doc:id="4fc8ba67-2b55-40bb-bb03-654e10799824" >
+		<wsc:connection wsdlLocation="http://www.holidaywebservice.com//HolidayService_v2/HolidayService2.asmx?wsdl" service="HolidayService2" port="HolidayService2Soap12" address="http://www.holidaywebservice.com/HolidayService_v2/HolidayService2.asmx" />
+	</wsc:config>
+	<flow name="webservice-invoke-demoFlow" doc:id="466e4794-ff7b-4fc7-9f50-cdda42827e26" >
+		<http:listener doc:name="Listener" doc:id="ee704374-8974-4d55-88fc-640321b114d5" config-ref="HTTP_Listener_config" path="/getHolidays"/>
+		<ee:transform doc:name="Transform Message" doc:id="034b766a-c9ff-4f84-bdc3-a054b30b157e" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+ns ns0 http://www.holidaywebservice.com/HolidayService_v2/
+---
+{
+	ns0#GetHolidaysAvailable: {
+		ns0#countryCode: payload.countryCode
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<wsc:consume operation="GetHolidaysAvailable" doc:name="Consume" doc:id="a9ace538-4574-47d0-9576-93d11c4f20e6" config-ref="Web_Service_Consumer_Config"/>
+		<ee:transform doc:name="Transform Message" doc:id="f112cef5-2d8e-402d-8b9d-d1c72fea729d" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+ns ns0 http://www.holidaywebservice.com/HolidayService_v2/
+---
+payload.body.ns0#GetHolidaysAvailableResponse.ns0#GetHolidaysAvailableResult.*ns0#HolidayCode map ( holidayCode , indexOfHolidayCode ) -> {
+	Code: holidayCode.ns0#Code default "",
+	Description: holidayCode.ns0#Description default ""
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="28ccde8b-801d-42ae-a48b-e26eceac8a6d" />
+	</flow>
+</mule>
